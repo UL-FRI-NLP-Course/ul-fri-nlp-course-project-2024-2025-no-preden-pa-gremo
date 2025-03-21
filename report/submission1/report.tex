@@ -1,0 +1,150 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% FRI Data Science_report LaTeX Template
+% Version 1.0 (28/1/2020)
+% 
+% Jure Demšar (jure.demsar@fri.uni-lj.si)
+%
+% Based on MicromouseSymp article template by:
+% Mathias Legrand (legrand.mathias@gmail.com) 
+% With extensive modifications by:
+% Antonio Valente (antonio.luis.valente@gmail.com)
+%
+% License:
+% CC BY-NC-SA 3.0 (http://creativecommons.org/licenses/by-nc-sa/3.0/)
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%----------------------------------------------------------------------------------------
+%	PACKAGES AND OTHER DOCUMENT CONFIGURATIONS
+%----------------------------------------------------------------------------------------
+\documentclass[fleqn,moreauthors,10pt]{ds_report}
+\usepackage[english]{babel}
+
+\graphicspath{{fig/}}
+
+
+
+
+%----------------------------------------------------------------------------------------
+%	ARTICLE INFORMATION
+%----------------------------------------------------------------------------------------
+
+% Header
+\JournalInfo{FRI Natural language processing course 2025}
+
+% Interim or final report
+\Archive{Project report} 
+%\Archive{Final report} 
+
+% Article title
+\PaperTitle{Automatic generation of Slovenian traffic news for RTV Slovenija} 
+
+% Authors (student competitors) and their info
+\Authors{Anže Javornik, Timotej Rozina, Anže Šavli}
+
+% Advisors
+\affiliation{\textit{Advisors: Slavko Žitnik}}
+
+% Keywords
+\Keywords{traffic news, automatic generation, RTV Slovenija, news generation}
+\newcommand{\keywordname}{Keywords}
+
+
+%----------------------------------------------------------------------------------------
+%	ABSTRACT
+%----------------------------------------------------------------------------------------
+
+\Abstract{
+
+}
+
+%----------------------------------------------------------------------------------------
+
+\begin{document}
+
+% Makes all text pages the same height
+\flushbottom 
+
+% Print the title and abstract box
+\maketitle 
+
+% Removes page numbering from the first page
+\thispagestyle{empty} 
+
+%----------------------------------------------------------------------------------------
+%	ARTICLE CONTENTS
+%----------------------------------------------------------------------------------------
+
+\section*{Introduction}
+    In this assignment, we will develop an automated solution for generating Slovenian traffic news reports tailored specifically for RTV Slovenija's radio broadcasts. The goal is to replace the existing manual process with an efficient, accurate, and automated system leveraging advanced language modeling techniques (LLMs).
+    
+    We will start by reviewing existing research to choose the best LLM for the task and study the provided traffic data. Initially, we will use prompt engineering methods to optimize our results and set up clear evaluation criteria to check if the news reports correctly highlight important events, use accurate road names, follow formatting rules, and have the right length and clarity. Afterwards, we will fine-tune the chosen LLM for better performance and finally assess how well the automatic system performs compared to manual reports, using both numbers (like precision, recall, and F1-score) and human feedback.
+
+
+%------------------------------------------------
+
+\section{Methods}
+
+\subsection{Existing solutions}
+
+In this section we will look at some existing solutions that tackle similar challenges include several advanced and practical implementations currently in operation.
+
+\begin{itemize}
+    \item GEWI's TIC Software is a prominent solution used by both commercial and government organizations for managing traffic data. This system collects, generates, and distributes various traffic-related information, such as incidents, weather conditions, and parking availability. It facilitates operators to manually input data or automate data integration from live traffic sources \cite{gewi2024}.
+    
+    \item Another innovative solution, TrafficGPT, employs multiple AI agents to generate comprehensive traffic information. It includes a text-to-demand agent for user interaction, a traffic prediction agent that analyzes temporal traffic data, and a visualization agent presenting traffic insights clearly \cite{trafficgpt2024}.
+    
+    \item Waze offers another practical example with its voice-activated incident reporting feature. Users can verbally report traffic incidents, and the AI system within the app interprets and processes these reports, ensuring real-time and accurate updates \cite{waze2024}.
+\end{itemize}
+
+\subsection{LLM options}
+
+In this section, we will describe selected few LLM systems that we feel like would offer optimal performance for our task and goals.
+
+\begin{itemize}
+    \item LLaMA - family of models, developed by Meta, stands out as a prominent open-source choice. The latest iteration, LLaMA 3, boasts improved efficiency, versatility, and a significantly large context window. This expanded context window could be particularly beneficial for processing larger datasets or more intricate reporting instructions, allowing the model to consider more information at once and potentially generate more comprehensive and contextually relevant reports. LLaMA 3 can be utilized locally.
+
+    \item Mistral AI - offers set of open-source LLMs, including Mistral 7B and Mixtral. Mistral provides a fine-tuning API through its La Plateforme, simplifying the process of customizing these models. This dedicated API makes it easier for developers to programmatically fine-tune Mistral models.
+
+    \item Gemma - a family of lightweight open-source LLMs from Google, presents another compelling option. These models are available in different sizes, ranging from 2 billion to 27 billion parameters, offering flexibility to choose a model that aligns with available computational resources and desired performance levels. Gemma has shown strong performance compared to other open-source models and supports integration with various tools and frameworks.
+
+    \item Anthropic's Claude - models are positioned as strong models with a particular emphasis on being helpful, honest, harmless, and safe for enterprise applications. Its ability to handle complex queries, potential for data analysis tasks (categorization, classification, and summarization of large datasets) and multi-step reasoning could be beneficial for generating detailed reports.
+    
+\end{itemize}
+
+\subsection{Initial ideas}
+
+To effectively develop an automated system for generating Slovenian traffic news for RTV Slovenija, we will initially experiment with prompt engineering techniques and test them on listed LLM options. This will involve crafting and testing various prompts to determine their effectiveness in producing clear, accurate, and contextually relevant traffic reports.
+
+After establishing baseline results with prompt engineering, we will define clear evaluation criteria, such as accuracy in identifying important events, correct usage of road names, appropriate report length, and adherence to RTV Slovenija’s broadcasting guidelines.
+
+Finally, based on the insights gathered from these initial tests, we will plan the subsequent fine-tuning process for the selected LLM to enhance its performance further.
+
+\subsection{Dataset}
+
+Our dataset contains Slovenian traffic information for the years 2022, 2023, and 2024. Each year's data is organized in separate sheets. The dataset includes entries with details such as timestamps, operator names, and various categories of traffic information like weather conditions, roadwork, restrictions for heavy vehicles, general notices, and other road obstructions.
+
+%------------------------------------------------
+
+\section*{Results}
+
+
+%------------------------------------------------
+
+\section*{Discussion}
+
+
+%------------------------------------------------
+
+\section*{Acknowledgments}
+
+
+%----------------------------------------------------------------------------------------
+%	REFERENCE LIST
+%----------------------------------------------------------------------------------------
+\bibliographystyle{unsrt}
+\bibliography{report}
+
+
+\end{document}
