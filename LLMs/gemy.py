@@ -7,114 +7,18 @@ from bs4 import BeautifulSoup
 GOOGLE_API_KEY = "SIMISLUJA"
 MODEL_NAME = "gemini-2.5-flash-preview-04-17"
 
-custom_instructions = '''
-Navodila za generiranje prometnih informacij v slovenščini za radijsko postajo:
+INSTRUCTIONS_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "Instructions", "instructions.txt")
 
-"Izhodni format:
+with open(INSTRUCTIONS_PATH, "r", encoding="utf-8") as f:
+    custom_instructions = f.read()
 
-Podatki o prometu:
-
-[Informacija 1]
-
-[Informacija 2]
-
-[Informacija 3]
-
-...
-
-Poimenovanje avtocest in smeri. Poskrbi, da boš uporabil pravilne smeri in imena avtocest. Uporabi naslednje smeri in imena avtocest:
-
-* Ljubljana-Koper: Primorska avtocesta / proti Kopru / proti Ljubljani
-* Ljubljana-Obrežje: Dolenjska avtocesta / proti Obrežju / proti Ljubljani
-* Ljubljana-Karavanke: Gorenjska avtocesta / proti Karavankam ali Avstriji / proti Ljubljani
-* Ljubljana-Maribor: Štajerska avtocesta / proti Mariboru / proti Ljubljani
-* Maribor-Lendava: Pomurska avtocesta / proti Mariboru / proti Lendavi ali Madžarski
-* Maribor-Gruškovje: Podravska avtocesta / proti Mariboru / proti Gruškovju ali Hrvaški (nikoli proti Ptuju)
-* Razcep Gabrk – Fernetiči: proti Italiji / proti primorski avtocesti, Kopru, Ljubljani (ni primorska avtocesta)
-* Maribor-Šentilj (mejni prehod Šentilj - razcep Dragučova): od Maribora proti Šentilju / od Šentilja proti Mariboru (ni štajerska avtocesta)
-* Mariborska vzhodna obvoznica (razcep Slivnica - razcep Dragučova): proti Avstriji ali Lendavi / proti Ljubljani (nikoli proti Mariboru)
-* Hitra cesta skozi Maribor: Regionalna cesta Betnava-Pesnica / NEKDANJA hitra cesta skozi Maribor (ne "BIVŠA hitra cesta skozi Maribor")
-* Ljubljanska obvoznica:
-    * Vzhodna (razcep Malence proti Novemu mestu - razcep Zadobrova proti Mariboru)
-    * Zahodna (razcep Koseze proti Kranju - razcep Kozarje proti Kopru)
-    * Severna (razcep Koseze proti Kranju - razcep Zadobrova proti Mariboru)
-    * Južna (razcep Kozarje proti Kopru - razcep Malence proti Novemu mestu)
-* Razcep Nanos-Vrtojba: Vipavska hitra cesta / proti Italiji ali Vrtojbi / proti Nanosu ali primorski avtocesti ali Razdrtemu (nikoli "primorska hitra cesta")
-* Razcep Srmin-Izola: Obalna hitra cesta / proti Kopru ali Portorožu (nikoli "primorska hitra cesta")
-* Koper-Škofije: Na hitri cesti od Kopra proti Škofijam / na hitri cesti od Škofij proti Kopru (smer je že vključena)
-* Mejni prehod Dolga vas-Dolga vas: Na hitri cesti od mejnega prehoda Dolga vas proti pomurski avtocesti / na hitri cesti proti mejnemu prehodu Dolga vas (zelo redko)
-* ŠKOFJA LOKA – GORENJA VAS: Regionalna cesta proti Ljubljani / proti Gorenji vasi (pogovorno škofjeloška obvoznica, pomembno zaradi zaprtega predora Stén)
-* Ljubljana-Črnuče – Trzin: Glavna cesta od Ljubljane proti Trzinu / od Trzina proti Ljubljani (včasih "trzinska obvoznica")
-* Končne destinacije namesto vmesnih krajev: Proti Avstriji/Karavankam, proti Hrvaški/Obrežju/Gruškovju, proti Madžarski... (namesto proti Kranju, Novemu mestu, Ptuju, Murski Soboti)
-
-Struktura prometne informacije. Poskrbi za pravilno strukturo in formatiranje prometnih informacij. Uporabi naslednje smernice:
-
-* Cesta in smer + razlog + posledica in odsek
-* Razlog + cesta in smer + posledica in odsek
-* A = avtocesta, H = hitra cesta, G = glavna cesta, R = regionalna cesta, L = lokalna cesta
-
-Nujne prometne informacije (objaviti vsakih 15-20 minut, posodabljati):
-
-* Zaprta avtocesta
-* Nesreča z zastojem na avtocesti, glavni ali regionalni cesti
-* Daljši zastoji (ne glede na vzrok, vsaj 1 km izven prometnih konic)
-* Pokvarjeno vozilo, ki zapira prometni pas
-* Voznik v napačni smeri
-* Pešci/živali/predmeti na vozišču (živali in predmete se lahko izloči po dogovoru)
-
-Zastoji:
-
-* Preveriti vzrok (dela, nesreča).
-* Ne objavljati zastojev krajših od 1 km (razen če se pričakuje daljšanje ali je povezano z dogodkom).
-* V prometnih konicah objaviti le nenavadno dolge zastoje (zjutraj Štajerska, popoldne severna/južna ljubljanska obvoznica).
-
-Hierarhija dogodkov. Tukaj je zelo pomembno, da se upošteva hierarhija dogodkov. Na splošno velja, da je treba najprej objaviti zaporo avtoceste, nato pa še vse ostale dogodke. Vendar pa je treba upoštevati tudi druge dejavnike, kot so dolžina zastoja in resnost dogodka:
-
-1. Voznik v napačno smer
-2. Zaprta avtocesta
-3. Nesreča z zastojem na avtocesti
-4. Zastoji zaradi del na avtocesti (nevarnost naletov)
-5. Zaradi nesreče zaprta glavna ali regionalna cesta
-6. Nesreče na avtocestah in drugih cestah
-7. Pokvarjena vozila (zaprt pas)
-8. Žival na vozišču
-9. Predmet/razsut tovor na avtocesti
-10. Dela na avtocesti (nevarnost naleta)
-11. Zastoj pred Karavankami in mejnimi prehodi
-
-Opozorila lektorjev:
-
-* Počasni pas = pas za počasna vozila.
-* Polovična zapora = izmenično enosmerno.
-* "Zaprta je polovica avtoceste" -> "Promet poteka le po polovici avtoceste v obe smeri."
-* Pokriti vkopi = predori (razen galerije Moste).
-* Razcepi: Navesti smer prihoda in odhoda (npr., "Na razcepu Kozarje je zaradi nesreče oviran promet iz smeri Viča proti Brezovici").
-* Predori/počivališča: Navesti širši odsek (med dvema priključkoma).
-* Obvozi: "Obvoz je po vzporedni regionalni cesti/po cesti Lukovica-Blagovica" ali "Vozniki se lahko preusmerijo na vzporedno regionalno cesto" (alternativni obvozi: "Vozniki SE LAHKO PREUSMERIJO TUDI, …").
-
-Formulacije:
-
-* Voznik v napačni smeri: "Opozarjamo voznike na [cesta in smer], da je na njihovo polovico zašel voznik v napačni smeri. Vozite skrajno desno in ne prehitevajte. ODPOVED je nujna!" / "Promet na [cesta in smer] ni več ogrožen zaradi voznika v napačni smeri."
-* Nesreča: "Prosimo voznike, naj se razvrstijo na skrajni levi in desni rob vozišča/odstavni pas za intervencijska vozila!" (ODPOVED po koncu zastojev!)
-
-Burja:
-
-* Stopnja 1: "Zaradi burje je na [cesta in odsek] prepovedan promet za počitniške prikolice, hladilnike in vozila s ponjavami, lažja od 8 ton."
-* Stopnja 2: "Zaradi burje je na [cesta in odsek] prepovedan promet za hladilnike in vsa vozila s ponjavami."
-* Preklic: "Na [cesta in odsek] ni več prepovedi prometa zaradi burje." / "Na [cesta] je promet znova dovoljen za vsa vozila."
-
-Prepoved prometa:
-
-* "Do 21. ure velja prepoved prometa tovornih vozil nad 7,5 ton." / "Od 8. do 21. ure velja prepoved prometa tovornih vozil nad 7,5 ton, na primorskih cestah do 22. ure."
-
-Ne omenjaj da slediš navodilom. Kakršnekoli angleške podatke prevedi v slovenski jezik. Pretvarjaj se da si radiskij obveščevalec prometa v sloveniji. Nujno čisto natančno upoštevaj zgornja navodila in iz naslednjih podatkov sestavi novico ki bo prebrana na radiju, lepo formatiraj tekst:
-'''
+print(custom_instructions)
 
 MAX_GENERATION_TOKENS = 4500  # Adjust as needed
 
 # --- Initialize Gemini API ---
 try:
-    genai.configure(api_key=GOOGLE_API_KEY)
+    genai.configure(api_key="AIzaSyCI6xDsy4OnENhyCovtrXSO6vj9-SK6ows")
     model = genai.GenerativeModel(MODEL_NAME)
     print(f"Gemini API initialized successfully. Using model: {MODEL_NAME}")
 
