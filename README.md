@@ -1,4 +1,4 @@
-# Natural language processing course: `Automatic generation of Slovenian traffic news for RTV Slovenija`
+# Natural language processing course: `Iterative Refinement of LLM Instructions for Automated Slovenian Traffic News Generation for RTV Slovenija`
 
 ## Group members
 
@@ -8,81 +8,82 @@
 
 ## Description
 
-LLM, »fine-tune« it, leverage prompt engineering techniques to generate short traffic reports. You are given Excel data from promet.si portal and your goal is to generate regular and important traffic news that are read by the radio presenters at RTV Slovenija. You also need to take into account guidelines and instructions to form the news. Currently, they hire students to manually check and type reports that are read every 30 minutes.
+This project addresses the automatic generation of Slovenian traffic news, specifically targeting the needs of RTV Slovenija, where such reports are currently manually prepared. Utilizing Excel data from the `promet.si` portal, the system employs a two-Large Language Model (LLM) approach.
+
+The Slovenian GaMS-9B-Instruct model generates initial traffic reports based on engineered prompts and specific guidelines. Subsequently, the **Gemini 2.5 Flash Preview (`gemini-2.5-flash-preview-04-17`)** model evaluates these reports and iteratively refines the instructions provided to GaMS. This methodology focuses on enhancing the quality, accuracy, and adherence of LLM-generated news to RTV Slovenija's stylistic and content requirements through a feedback loop, offering an alternative to direct LLM fine-tuning. The core contribution is an adaptable pipeline demonstrating LLM-driven instruction improvement for specialized Slovenian text generation.
+
+For full details, please refer to the project report: `report.pdf`.
 
 ## Methodology
 
-1. Literature Review: Conduct a thorough review of existing research and select appropriate LLMs for the task. Review and prepare an exploratory report on the data provided.
+The project followed an iterative approach to develop and refine the automated news generation system:
 
-2. Initial solution: Try to solve the task initially only by using prompt engineering techniques.
+1.  **Literature Review and Data Exploration**:
+    *   Conducted a review of available LLMs, leading to the selection of `cjvt/GaMS-9B-Instruct` for Slovenian text generation and **Gemini 2.5 Flash Preview (`gemini-2.5-flash-preview-04-17`)** for evaluation and instruction refinement.
+    *   Analyzed and preprocessed the provided traffic data from `promet.si` (Excel format). This involved filtering data by timestamp, consolidating relevant information, and cleaning HTML content.
 
-3. Evaulation definition: Define (semi-)automatic evaluation criteria and implement it. Take the following into account: identification of important news, correct roads namings, correct filtering, text lengths and words, ...
+2.  **Initial Solution: Prompt Engineering**:
+    *   Developed an initial comprehensive set of instructions (`default_custom_instructions`) for the GaMS-9B-Instruct model to guide the generation of traffic reports. These instructions covered aspects like urgency-based ordering, sentence structures, naming conventions, and special handling for specific traffic events.
 
-4. LLM (Parameter-efficient) fine-tuning: Improve an existing LLM to perform the task automatically. Provide an interface to do an interactive test.
+3.  **Evaluation Definition and Implementation**:
+    *   Implemented a semi-automatic evaluation mechanism using the **Gemini 2.5 Flash Preview (`gemini-2.5-flash-preview-04-17`)** model.
+    *   Gemini was prompted with a meta-instruction to:
+        *   Assess GaMS's adherence to each specific instruction point.
+        *   List instructions followed and not followed.
+        *   Provide a numerical adherence score (0-1).
+        *   Propose revised instructions for GaMS to improve future outputs.
 
-5. Evaluation and Performance Analysis: Assess the effectiveness of each technique by measuring improvements in model performance, using appropriate automatic (P, R, F1) and human evaluation metrics.
+4.  **LLM Interaction for Iterative Improvement**:
+    *   Established an interactive loop orchestrated by `main.py`:
+        1.  The user provides a date-time.
+        2.  Processed traffic data is fed to GaMS-9B-Instruct with the current set of instructions.
+        3.  GaMS's generated output is evaluated by **Gemini 2.5 Flash Preview (`gemini-2.5-flash-preview-04-17`)**, which suggests new/modified instructions.
+        4.  The user decides if these new instructions should replace the old ones for subsequent iterations.
+    *   This iterative refinement process allows for progressive improvement of GaMS's output without direct model fine-tuning.
+
+5.  **Performance Analysis**:
+    *   Assessed the effectiveness of the iterative refinement technique by:
+        *   Tracking changes in Gemini's adherence score for GaMS's output across iterations.
+        *   Qualitatively analyzing differences in GaMS-generated text, focusing on improvements in areas like urgency ordering, stylistic consistency, and adherence to specific formatting rules.
+        *   Implicit human evaluation occurred when the user decided whether Gemini's suggested instruction changes were beneficial.
 
 ## Dataset
 
-1. RTV Slo data:
+The primary data sources for this project were:
 
-    The data consists of:
+1.  **Traffic Information Data**:
+    *   An Excel file (`Podatki - PrometnoPorocilo_2022_2023_2024.xlsx`) containing traffic information from the `promet.si` portal. This was the direct input for generating traffic news.
+2.  **Guidelines and Requirements**:
+    *   RTV Slovenija's existing guidelines and requirements for traffic news (implicitly or explicitly derived from documents like `PROMET, osnove.docx`, `PROMET.docx`) informed the development of the instructions for the LLMs and the evaluation criteria.
 
-    - Promet.si input resources (Podatki - PrometnoPorocilo_2022_2023_2024.xlsx).
+## How to Run
 
-    - RTV Slo news texts to be read through the radio stations (Podatki - rtvslo.si).
+1.  **Prerequisites**:
+    *   Python 3.x
+    *   pip
 
-    - Additional instructions for the students that manually type news texts (PROMET, osnove.docx, PROMET.docx).
-
-## Submission 2 changes
-
-1. Implemented functionality
-
-    - Inside LLMs folder we implemented two different LLMs (gaMS and Gemini).
-    - The data is being processed in readData file located in Data folder. It takes data from 30 minutes interval and calculates the similarity between the columns data (A1, B1, C1, A2, B2, C2).
-    - The file returns prompt text that is parsed into selected LLM model.
-
-2. Result analysis
-
-    - The LLMs correctly parse all the given news and generates text.
-    - Both LLMs need to be tunned to follow importance rules / sequence. In this regard Gemini currently stongly outperforms gaMS.
-    - Both LLMs have some problems with formatting slovene statements.
-
-3. Future
-
-    - We need to implement better learning of rules for both models.
-    - We need to implement "Odpoved" functionality
-    - We need to implement better statement formatting and upgrade analysis algorithms to check the statements and fix them
-
-4. Current results examples:
-
-    - Gemini
-
-    ```
-    Poslušate prometne informacije.
-
-    Podatki o prometu:
-
-    1.  Na Primorski avtocesti proti Ljubljani ovira promet okvarjeno vozilo v predoru Kastelec. Zaprt je vozni pas.
-    2.  Pričakujemo daljše čakalne dobe na vstopnih točkah iz Avstrije v Slovenijo. Pred predorom Karavanke na Gorenjski avtocesti proti Karavankam in na mejnem prehodu Šentilj od Maribora proti Šentilju. Glavni razlog je nakup vinjet na meji. Voznikom priporočamo, da vinjeto kupijo prek spleta.
-    3.  V Ljubljani je zaradi del na cesti med 4. in 7. januarjem predvidena popolna zapora Dunajske ceste. Obvoz je urejen po Samovi, Drenikovi, Celovški in Tivolski cesti.
-    4.  Zaradi praznika danes od 8. do 22. ure velja prepoved prometa tovornih vozil, katerih največja dovoljena masa presega 7,5 ton.
-    5.  Ponekod po Sloveniji megla v pasovih zmanjšuje vidljivost.
-    6.  Na cesti čez prelaz Vršič so obvezne verige.
-
-    Želimo vam srečno in varno pot.
+2.  **Clone the Repository**:
+    ```bash
+    git clone <repository-url>
+    cd <repository-directory>
     ```
 
-    - gaMS
-
+3.  **Install Dependencies**:
+    Create a `requirements.txt` file with the content provided (see list of dependencies in the prompt) and run:
+    ```bash
+    pip install -r requirements.txt
     ```
-    Zaradi praznika velja omejitev prometa tovornih vozil, katerih največja dovoljena masa presega 7,5 t, danes od 8. do 22. ure. Ponekod po Sloveniji megla v pasovih zmanjšuje vidljivost.
 
-    Na primorski avtocesti v predoru Kastelec proti Ljubljani ovire zaradi okvarjenega vozila. Zaprt je vozni pas. Obvezne so verige na cesti čez prelaz Vršič.
+4.  **Set up Google API Key**:
+    *   You will need a Google API key for the Gemini model.
+    *   Open the file `LLMs/gemy.py`.
+    *   Locate the line `genai.configure(api_key="")`.
+    *   Replace the placeholder or empty string with your valid Google API key.
+    *   Alternatively, modify the script to load the API key from an environment variable for better security.
 
-    V Ljubljani je med 4. in 7. 1. predvidena popolna zapora Dunajske ceste. Obvoz bo urejen po Samovi, Drenikovi, Celovški in Tivolski cesti. Več o delovnih zaporah v prometni napovedi.
-
-    Želimo vam srečno in varno na cestah v letu 2024! As of January 1 neighbouring country Croatia has entered the Schengen Area. Border control between Slovenia and Croatia is lifted. There is no need to stop at borders. Drive carefully! Buy vignette for Slovenia online.
-
-    Thererore long queues are expected in entering points from Austria to Slovenia, i.e. Karavanke tunnel (A2) and Sentilj/Spielfeld crossing (A1). Important reason for these queues is that drivers don't have vignette for Slovenian roads and have to buy them at the border. To reduce or even avoid long waiting periods drivers are strongly recommended to buy vignette for Slovenian motorways online. They can do it here.
+5.  **Run the Project**:
+    Execute the main script from the project's root directory:
+    ```bash
+    python main.py
     ```
+    The script will guide you through providing a date and time to generate traffic news and interact with the instruction refinement process.
