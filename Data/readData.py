@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 import Levenshtein
 from bs4 import BeautifulSoup
 
-data_file = "./RTVSlo/Podatki - PrometnoPorocilo_2022_2023_2024.xlsx"
+data_file = "./Data/RTVSlo/Podatki - PrometnoPorocilo_2022_2023_2024.xlsx"
 
 def get_final_traffic_text(input_time_str, threshold=0.85):
     try:

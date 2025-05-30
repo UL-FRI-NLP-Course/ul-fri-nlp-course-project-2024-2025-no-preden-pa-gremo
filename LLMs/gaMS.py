@@ -3,46 +3,6 @@ from transformers import pipeline, AutoTokenizer, BitsAndBytesConfig
 import os
 import time
 
-custom_instructions = '''
-Na podlagi vhodnih podatkov oblikuj kratke, informativne prometne novice, kot bi jih prebral poslušalec radia. Uporabi spodnja pravila:
-
-1. NUJNO - Novice po nujnosti beri v naslednjem zaporedju:
-    1. Voznik v napačno smer
-    2. Zaprta avtocesta
-    3. Nesreča z zastojem na avtocesti
-    4. Zastoji zaradi del na avtocesti (nevarnost naletov)
-    5. Zaradi nesreče zaprta glavna ali regionalna cesta
-    6. Nesreče na avtocestah in drugih cestah
-    7. Pokvarjena vozila (zaprt pas)
-    8. Žival na vozišču
-    9. Predmet/razsut tovor na avtocesti
-    10. Dela na avtocesti (nevarnost naleta)
-    11. Zastoj pred Karavankami in mejnimi prehodi
-
-1. Struktura povedi:
-   - Cesta in smer + razlog + posledica in odsek
-   - ali: Razlog + cesta in smer + posledica in odsek
-
-2. Poimenuj avtoceste in smeri dosledno (primeri):
-   - PRIMORSKA AVTOCESTA: proti Kopru / proti Ljubljani
-   - DOLENJSKA AVTOCESTA: proti Obrežju / proti Ljubljani
-   - VIPAVSKA HITRA CESTA: med razcepom Nanos in Ajdovščino
-   - OBALNA HITRA CESTA: razcep Srmin – Izola
-   - Opiši ljubljansko obvoznico po krakih: vzhodna, zahodna, severna, južna
-
-3. Zastojev NE objavljaj, če:
-   - So kratki (do 1 km) in posledica zgolj gostega prometa
-   - So posledica običajnih prometnih konic
-
-4. Posebna pravila:
-   - Ob zaporah navedi obvoz: "Obvoz je po vzporedni regionalni cesti ..."
-   - Ob koncu dogodka napiši OPOVED: "Promet znova poteka brez ovir ..."
-   - Pri burji natančno označi stopnjo in omejitve prometa (glej primere spodaj)
-   - Vedno navedi širši odsek (med dvema priključkoma), zlasti pri predorih in počivališčih
-
-'''
-
-
 # --- Configuration ---
 model_id = "cjvt/GaMS-9B-Instruct"
 
@@ -67,16 +27,6 @@ else:
     use_quantization_if_gpu = False
 
 print(f"Using model: {model_id}")
-
-# --- Print Custom Instructions ---
-if custom_instructions:
-    print("-" * 30)
-    print("Using Custom Instructions (Prepended to first user message):")
-    print(custom_instructions)
-else:
-    print("-" * 30)
-    print("No custom instructions provided.")
-print("-" * 30)
 
 # --- Quantization Setup (GPU Only) ---
 # (Quantization setup code remains the same - using model_kwargs)
@@ -138,6 +88,7 @@ print("-" * 30)
 # --- Interactive Loop ---
 message_history = [] # Stores the conversation history
 
+'''
 print("\nStarting interactive chat session.")
 print("Type 'quit', 'exit', or 'stop' to end the session.")
 print("-" * 30)
@@ -227,5 +178,57 @@ while True:
         # ... (error handling) ...
         print("Please try again or type 'quit' to exit.")
 
+'''
+def chat_with_gams(prompt, instructions):
+    """
+    Chat with GaMS model, maintaining conversation history across calls.
+    Args:
+        instructions (str): Custom instructions to prepend on the first turn.
+        prompt (str): User's input message.
+    Returns:
+        str: Assistant's response.
+    """
+
+    print("Running gams...")
+
+    #if not hasattr(chat_with_gams, "message_history"):
+    chat_with_gams.message_history = []
+
+    message_history = chat_with_gams.message_history
+
+    if not message_history and instructions:
+        current_message_content = f"{instructions}\n\n{prompt}"
+    else:
+        current_message_content = prompt
+
+    message_history.append({"role": "user", "content": current_message_content})
+
+    try:
+        response = pipe(
+            message_history,
+            max_new_tokens=2048,
+            do_sample=True,
+            temperature=0.7,
+            eos_token_id=eos_token_id,
+        )
+
+        full_generated_output_list = response[0]["generated_text"]
+        new_assistant_message = full_generated_output_list[-1]
+
+        if new_assistant_message["role"] == "assistant":
+            assistant_response_content = new_assistant_message["content"]
+            message_history.append(new_assistant_message)
+            return assistant_response_content
+        else:
+            if message_history and message_history[-1]["role"] == "user":
+                message_history.pop()
+            raise ValueError("Unexpected response format from model.")
+
+    except Exception as e:
+        if message_history and message_history[-1]["role"] == "user":
+            message_history.pop()
+        raise e
 
 print("\n--- Script Finished ---")
+
+
