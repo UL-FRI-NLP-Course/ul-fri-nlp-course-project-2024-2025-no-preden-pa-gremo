@@ -33,7 +33,7 @@ MAX_GENERATION_TOKENS = 9000  # Adjust as needed
 
 # --- Initialize Gemini API ---
 try:
-    genai.configure(api_key="")
+    genai.configure(api_key="[INSERT_YOUR_KEY_HERE]")
     model = genai.GenerativeModel(MODEL_NAME)
     print(f"Gemini API initialized successfully. Using model: {MODEL_NAME}")
 

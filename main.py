@@ -82,14 +82,6 @@ def step_one():
                 print("Vhodni podatki:\n" + traffic_report)
                 print(("-" * 50) + "\n")
                 while True:
-                    # gams_response = '''
-                    #                 Danes od 8. do 22. ure velja prepoved prometa tovornih vozil nad 7,5 ton.,
-                    #                 Na cesti čez prelaz Vršič so obvezne verige.,
-                    #                 Ponekod po Sloveniji megla v pasovih zmanjšuje vidljivost.,
-                    #                 Na Dunajski cesti v Ljubljani bo med 4. in 7. januarjem predvidena popolna zapora. Obvoz bo urejen po Samovi, Drenikovi, Celovški in Tivolski cesti.,
-                    #                 Srečno in varno na cestah v letu 2024!
-                    #                 Na Primorski avtocesti proti Ljubljani je zaradi okvarjenega vozila oviran promet v predoru Kastelec, zaprt je vozni pas.
-                    #                 '''
                     gams_response = chat_with_gams(traffic_report, default_custom_instructions)
                     print(f"GaMS: {gams_response}")
                     print(("-" * 50) + "\n")
@@ -104,6 +96,9 @@ def step_one():
                         print(f"New instructions: {response_gemini.split("$")[1]}")
                     else:
                         break
+
+                if input("Do you want to generate a report for a new date? (y/n) ").lower() == "n":
+                    break
 
                 return user_date
         except ValueError:
@@ -124,7 +119,7 @@ def main():
             break
 
         while True:
-            user_input = input("You: ")
+            user_input = input("Command input (quit/next):")
             if user_input.lower() in ["exit", "quit"]:
                 print("Goodbye!")
                 return
