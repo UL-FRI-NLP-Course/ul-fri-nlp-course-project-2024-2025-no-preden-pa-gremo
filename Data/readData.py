@@ -17,7 +17,7 @@ def get_final_traffic_text(input_time_str, threshold=0.8):
         df['Datum'] = pd.to_datetime(df['Datum'], format='%Y-%m-%d %H:%M:%S', errors='coerce')
 
         input_time = datetime.strptime(input_time_str, "%Y-%m-%d %H:%M:%S")
-        start_time = input_time - timedelta(minutes=15)
+        start_time = input_time - timedelta(minutes=5)
         mask = (df['Datum'] >= start_time) & (df['Datum'] <= input_time)
         filtered_df = df.loc[mask]
         # Filter out columns where all values are NaN
@@ -139,3 +139,8 @@ def get_real_traffic_report(input_time_str: str):
                 return body
 
     return None
+
+
+print(get_real_traffic_report("2023-04-19 18:35:00"))
+result = get_final_traffic_text("2023-04-19 18:35:00")
+print(result)

@@ -6,6 +6,7 @@ from datetime import datetime
 from Data.readData import get_final_traffic_text, get_real_traffic_report  # import the function
 from LLMs.gaMS import chat_with_gams
 from LLMs.gemy import chat_with_gemini
+from LLMs.gemma import chat_with_gemma
 from Scores.bert import calculate_bert
 from Scores.bleu import calculate_bleu
 
@@ -66,6 +67,11 @@ def step_one():
         if date_input.lower() in ["exit", "quit"]:
             print("Goodbye!")
             return None
+        model_input = input("Enter model input ('gams' or 'gemma'): ")
+        print()
+        if model_input.lower() not in ["gams", "gemma"]:
+            print("Invalid model input. Please enter 'gams' or 'gemma'.")
+            continue
         try:
             user_date = datetime.strptime(date_input, "%Y-%m-%d %H:%M:%S")
             # Spinner setup
@@ -86,16 +92,22 @@ def step_one():
 
                 print(("-" * 50) + "\n")
                 while True:
-                    gams_response = chat_with_gams(traffic_report, default_custom_instructions)
-                    print(f"GaMS: {gams_response}")
-                    print(("-" * 50) + "\n")
+                    # gams_response = chat_with_gams(traffic_report, default_custom_instructions)
+                    if model_input.lower() == "gams":
+                        model_response = chat_with_gams(traffic_report, default_custom_instructions)
+                        print(f"GaMS: {model_response}")
+                        print(("-" * 50) + "\n")
+                    if model_input.lower() == "gemma":
+                        model_response = chat_with_gemma(traffic_report, default_custom_instructions)
+                        print(f"Gemma: {model_response}")
+                        print(("-" * 50) + "\n")
 
                     # Score calculations
-                    bleu_score_single_ref = calculate_bleu(gams_response, optimal_traffic_report)
+                    bleu_score_single_ref = calculate_bleu(model_response, optimal_traffic_report)
                     print(f"BLEU Score (single reference): {bleu_score_single_ref:.4f}")
 
                     # --- Calculate and Print BERTScore ---
-                    bert_precision, bert_recall, bert_f1 = calculate_bert(gams_response,
+                    bert_precision, bert_recall, bert_f1 = calculate_bert(model_response,
                                                                           optimal_traffic_report)
                     print(f"BERTScore Precision: {bert_precision:.4f}")
                     print(f"BERTScore Recall: {bert_recall:.4f}")
@@ -103,14 +115,16 @@ def step_one():
 
                     print(("-" * 50) + "\n")
 
-                    response_gemini = chat_with_gemini(default_custom_instructions, traffic_report, gams_response)
-                    new_instructions = response_gemini.split("$")[1]
+                    response_gemini = chat_with_gemini(default_custom_instructions, traffic_report, model_response)
+                    print("Gemini response:", response_gemini)
 
-                    print(f"Gemini: {response_gemini.split("$")[0]}")
+                    new_instructions = "" #response_gemini.split("$")[1]
+
+                    # print(f"Gemini: {response_gemini.split("$")[0]}")
 
                     if input("Do you want Gemini to generate new instructions? (y/n) ").lower()  == "y":
                         default_custom_instructions = new_instructions
-                        print(f"New instructions: {response_gemini.split("$")[1]}")
+                        # print(f"New instructions: {response_gemini.split("$")[1]}")
                     else:
                         break
 
