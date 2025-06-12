@@ -4,7 +4,7 @@ import google.generativeai as genai
 from bs4 import BeautifulSoup
 
 default_custom_instructions = '''
-LLM GaMS-9B-Instruct sem dal naslednja navodila:
+LLM modelu sem dal naslednja navodila:
 [instructions]
 
 In naslednje podatke o razmerah na cestah:
@@ -13,9 +13,26 @@ In naslednje podatke o razmerah na cestah:
 Vrnil mi je odgovor:
 [gams_response]
 
-Ali lahko oceniš kako dobro se je držal navodil? Lahko prešteješ, česa se je držal in česa se ni držal. Navodila, ki jih ni bilo potrebno upoštevati, ker taki podatki niso bili podani so lahko ignorirana. Glede na prešteto mi podaj tudi oceno od 0-1, kako dobrer je odgovor modela GaMS-9B-Instruct. Oceno podaj v formatu "Ocena: x.xx", zato da jo lahko avtomatsko preberemo iz odgovora. V odgovoru vrni le: navodila, ki se jih je držal in navodila ki se jih ni držal, ter na koncu oceno. odgovor naj bo kratek in jedernat.
+Ali lahko oceniš kako dobro se je držal navodil? Lahko prešteješ, česa se je držal in česa se ni držal. Navodila, ki jih ni bilo potrebno upoštevati, ker taki podatki niso bili podani so lahko ignorirana. Glede na prešteto mi podaj tudi oceno od 1-5, kako dobrer je odgovor modela. 
 
-Glede na oceno in navodila, ki se jih gams ni držal, popravi obstoječa navodila, tako da bo njegov naslednji odgovor boljši. Poskrbi, da se bo povsem držal navodil. Ta nova navodila mi pošlji v novi vrstici, čisto na koncu odgovora. Ne dodajaj drugega teksta, le nova navodila v zadnjem odstavku. Na začetku navodil nujno uporabi znak $, da jih lahko avtomatsko izločimo iz odgovora.
+Oceno podaj v formatu "*Tip ocene* ocena: x - utemeljitev" in jo razlozi, zato da jo lahko avtomatsko preberemo iz odgovora. 
+
+Poleg generalne ocene vrni še oceno, na enak način za nasledna področja: 
+- Slovnica (jezikovna pravilnost, formalnost), 
+- Hierarhija dogodkov (vrstni red podatkov glede na navodila), 
+- Sestava prometne informacije ("razlog -> cesta in smer -> posledica in odsek" oz. "cesta in smer -> razlog -> posledica in odsek"),
+- Poimenovanje avtocest (LJUBLJANA-KOPER – PRIMORSKA AVTOCESTA/ proti Kopru/proti Ljubljani; LJUBLJANA-OBREŽJE – DOLENJSKA AVTOCESTA / proti Obrežju/ proti Ljubljani; LJUBLJANA-KARAVANKE – GORENJSKA AVTOCESTA/ proti Karavankam ali Avstriji/ proti Ljubljani; LJUBLJANA-MARIBOR – ŠTAJERSKA AVTOCESTA / proti Mariboru/Ljubljani; MARIBOR-LENDAVA – POMURSKA AVTOCESTA / proti Mariboru/ proti Lendavi/Madžarski; MARIBOR-GRUŠKOVJE – PODRAVSKA AVTOCESTA / proti Mariboru/ proti Gruškovju ali Hrvaški – nikoli proti Ptuju!; AVTOCESTNI ODSEK – RAZCEP GABRK – FERNETIČI – proti Italiji/ ali proti primorski avtocesti, Kopru, Ljubljani (PAZI: to ni primorska avtocesta); AVTOCESTNI ODSEK MARIBOR-ŠENTILJ (gre od mejnega prehoda Šentilj do razcepa Dragučova) ni štajerska avtocesta kot pogosto navede PIC, ampak je avtocestni odsek o) tukaj je samo pomembno, da tiste ki bi moral uporabiti, da jih je uporabil pravilno 
+
+V odgovoru vrni le: navodila, ki se jih je držal in navodila ki se jih ni držal, ter na koncu ocene, med vsako oceno naj boo prazna vrstica. Odgovor naj bo kratek in jedernat.
+
+Opis ocen:
+1 - slabo
+2 - zadostno
+3 - sprejemljivo
+4 - nadpovprečno
+5 - odlično
+
+Glede na oceno in navodila, ki se jih model ni držal, popravi obstoječa navodila, tako da bo njegov naslednji odgovor boljši. Poskrbi, da se bo povsem držal navodil. Ta nova navodila mi pošlji v novi vrstici, čisto na koncu odgovora. Ne dodajaj drugega teksta, le nova navodila v zadnjem odstavku. Na začetku navodil nujno uporabi znak $, da jih lahko avtomatsko izločimo iz odgovora.
 '''
 
 # --- Configuration ---
