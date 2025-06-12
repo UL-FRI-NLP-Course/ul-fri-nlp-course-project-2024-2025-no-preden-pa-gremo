@@ -32,7 +32,7 @@ Opis ocen:
 4 - nadpovprečno
 5 - odlično
 
-Glede na oceno in navodila, ki se jih model ni držal, popravi obstoječa navodila, tako da bo njegov naslednji odgovor boljši. Poskrbi, da se bo povsem držal navodil. Ta nova navodila mi pošlji v novi vrstici, čisto na koncu odgovora. Ne dodajaj drugega teksta, le nova navodila v zadnjem odstavku. Na začetku navodil nujno uporabi znak $, da jih lahko avtomatsko izločimo iz odgovora.
+Glede na oceno in navodila, ki se jih model ni držal, popravi obstoječa navodila, tako da bo njegov naslednji odgovor boljši. Poskrbi, da se bo povsem držal navodil. Ta nova navodila mi pošlji v novi vrstici, čisto na koncu odgovora. Ne dodajaj drugega teksta, le nova navodila v zadnjem odstavku. Na začetku sklopa novih navodil nujno uporabi znak $, da jih lahko v celoti avtomatsko izločimo iz odgovora.
 '''
 
 # --- Configuration ---

@@ -4,7 +4,7 @@ from transformers import pipeline, AutoTokenizer, BitsAndBytesConfig
 # --------------------------------------------------
 # Configuration – switched from GaMS to Google Gemma
 # --------------------------------------------------
-model_id = "google/gemma-2b-it"  # <‑‑ main change
+model_id = "google/gemma-2b-it"
 use_quantization_if_gpu = True  # still optional
 
 # --------------------------------------------------
