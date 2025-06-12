@@ -8,18 +8,18 @@ from pathlib import Path
 
 data_file = "./Data/RTVSlo/Podatki - PrometnoPorocilo_2022_2023_2024.xlsx"
 
-def get_final_traffic_text(input_time_str, threshold=0.85):
+def get_final_traffic_text(input_time_str, threshold=0.8):
     try:
-        df = pd.read_excel(data_file, sheet_name="2024")
+        t_start = datetime.strptime(input_time_str, "%Y-%m-%d %H:%M:%S")
+
+        df = pd.read_excel(data_file, sheet_name=f"{t_start.year}")
 
         df['Datum'] = pd.to_datetime(df['Datum'], format='%Y-%m-%d %H:%M:%S', errors='coerce')
 
         input_time = datetime.strptime(input_time_str, "%Y-%m-%d %H:%M:%S")
         start_time = input_time - timedelta(minutes=15)
-
         mask = (df['Datum'] >= start_time) & (df['Datum'] <= input_time)
         filtered_df = df.loc[mask]
-
         # Filter out columns where all values are NaN
         filtered_df = filtered_df.dropna(axis=1, how='all')
 
@@ -138,4 +138,12 @@ def get_real_traffic_report(input_time_str: str):
                 print(f"Found traffic report in {rtf_file.name} at {stamp}")
                 return body
 
+<<<<<<< Updated upstream
     return None
+=======
+    return None
+
+print(get_real_traffic_report("2023-04-19 16:45:00"))
+result = get_final_traffic_text("2023-04-19 18:35:00")
+print(result)
+>>>>>>> Stashed changes
