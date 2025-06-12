@@ -4,9 +4,10 @@ import sys
 import time
 from datetime import datetime
 from Data.readData import get_final_traffic_text  # import the function
-from LLMs.gaMS import chat_with_gams
-from LLMs.gemy import chat_with_gemini
-
+#from LLMs.gaMS import chat_with_gams
+#from LLMs.gemy import chat_with_gemini
+from Scores.bert import calculate_bert
+from Scores.bleu import calculate_bleu
 
 default_custom_instructions = '''
 Na podlagi vhodnih podatkov oblikuj kratke, informativne prometne novice, kot bi jih prebral poslušalec radia. Uporabi spodnja pravila:
@@ -128,4 +129,23 @@ def main():
             print(f"Echo: {user_input}")
 
 if __name__ == "__main__":
-    main()
+    #main()
+
+    generated_traffic_report = "The traffic flow on Route A is 600 vph. Route B has a traffic flow of 450 vph."
+    optimal_traffic_report = "Route A has a traffic flow of 600 vehicles per hour. The traffic on Route B is 450 vehicles per hour."
+    optimal_report_alternative = "The traffic volume for Route A is 600 vph, and for Route B, it is 450 vph."
+
+    bleu_score_single_ref = calculate_bleu(generated_traffic_report, optimal_traffic_report)
+    print(f"BLEU Score (single reference): {bleu_score_single_ref:.4f}")
+
+    # Using multiple acceptable optimal reports
+    bleu_score_multi_ref = calculate_bleu(generated_traffic_report,
+                                          [optimal_traffic_report, optimal_report_alternative])
+    print(f"BLEU Score (multiple references): {bleu_score_multi_ref:.4f}")
+    print("-" * 20)
+
+    # --- Calculate and Print BERTScore ---
+    bert_precision, bert_recall, bert_f1 = calculate_bert(generated_traffic_report, optimal_traffic_report)
+    print(f"BERTScore Precision: {bert_precision:.4f}")
+    print(f"BERTScore Recall: {bert_recall:.4f}")
+    print(f"BERTScore F1-Score: {bert_f1:.4f}")
