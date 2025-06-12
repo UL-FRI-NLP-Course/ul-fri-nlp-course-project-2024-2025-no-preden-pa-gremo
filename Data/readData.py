@@ -2,6 +2,9 @@ import pandas as pd
 from datetime import datetime, timedelta
 import Levenshtein
 from bs4 import BeautifulSoup
+from striprtf.striprtf import rtf_to_text
+import locale, re
+from pathlib import Path
 
 data_file = "./Data/RTVSlo/Podatki - PrometnoPorocilo_2022_2023_2024.xlsx"
 
@@ -91,6 +94,52 @@ def get_final_traffic_text(input_time_str, threshold=0.85):
         print(f"Error reading {data_file}: {e}")
         return None
 
-# Example usage:
-# result = get_final_traffic_text()
-# print(result)
+MARKER = "Podatki o prometu."
+
+def get_real_traffic_report(input_time_str: str):
+    t_start = datetime.strptime(input_time_str, "%Y-%m-%d %H:%M:%S")
+    t_end   = t_start + timedelta(minutes=15)
+
+    # Slovene month name
+    try:
+        locale.setlocale(locale.LC_TIME, "sl_SI.UTF-8")
+        month_sl = t_start.strftime("%B").capitalize()
+    except locale.Error:
+        month_sl = ["Januar","Februar","Marec","April","Maj","Junij",
+                    "Julij","Avgust","September","Oktober","November","December"][t_start.month-1]
+
+    dir_path = Path(f"./Data/RTVSlo/Podatki - rtvslo.si/Promet {t_start.year}/{month_sl} {t_start.year}")
+    if not dir_path.is_dir():
+        raise FileNotFoundError(dir_path.resolve())
+
+    stamp_rx = re.compile(
+        r"(\d{1,2})\.\s*(\d{1,2})\.\s*(\d{4})\s+[\t ]+\s*(\d{1,2})\.(\d{2})"
+    )
+
+    for rtf_file in sorted(dir_path.glob("*.rtf")):
+        try:
+            with rtf_file.open("r", encoding="utf-8", errors="ignore") as f:
+                raw = rtf_to_text(f.read())
+        except Exception:
+            continue
+
+        # Is this file in the time window?
+        for m in stamp_rx.finditer(raw):
+            d, mth, y, h, mi = map(int, m.groups())
+            try:
+                stamp = datetime(y, mth, d, h, mi)
+            except ValueError:
+                continue
+            if t_start <= stamp <= t_end:
+                # ── TRIM HERE ────────────────────────────────────────────
+                body = raw.split(MARKER, 1)[-1]           # everything after header
+                body = body.lstrip()                      # drop leading newlines/spaces
+                body = "\n".join(ln for ln in body.splitlines() if ln.strip())  # keep only non-empty lines
+                print(f"Found traffic report in {rtf_file.name} at {stamp}")
+                return body
+
+    return None
+
+print(get_real_traffic_report("2024-01-02 08:17:07"))
+result = get_final_traffic_text("2024-01-02 08:17:07")
+print(result)
