@@ -139,7 +139,3 @@ def get_real_traffic_report(input_time_str: str):
                 return body
 
     return None
-
-print(get_real_traffic_report("2024-01-02 08:17:07"))
-result = get_final_traffic_text("2024-01-02 08:17:07")
-print(result)

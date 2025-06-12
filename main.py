@@ -3,9 +3,9 @@ import itertools
 import sys
 import time
 from datetime import datetime
-from Data.readData import get_final_traffic_text  # import the function
-from LLMs.gaMS import chat_with_gams
-from LLMs.gemy import chat_with_gemini
+from Data.readData import get_final_traffic_text, get_real_traffic_report  # import the function
+#from LLMs.gaMS import chat_with_gams
+#from LLMs.gemy import chat_with_gemini
 from Scores.bert import calculate_bert
 from Scores.bleu import calculate_bleu
 
@@ -74,6 +74,7 @@ def step_one():
             spinner_thread.start()
             # Call get_final_traffic_text with the input date string
             traffic_report = get_final_traffic_text(date_input)
+            optimal_traffic_report = get_real_traffic_report(date_input)
             stop_event.set()
             spinner_thread.join()
             if traffic_report is None:
@@ -81,27 +82,28 @@ def step_one():
                 continue  # ask for date again
             else:
                 print("Vhodni podatki:\n" + traffic_report)
+                print("Optimalno poročilo:\n" + optimal_traffic_report)
+
                 print(("-" * 50) + "\n")
                 while True:
-                    gams_response = chat_with_gams(traffic_report, default_custom_instructions)
+                    gams_response = "chat_with_gams(traffic_report, default_custom_instructions)"
                     print(f"GaMS: {gams_response}")
                     print(("-" * 50) + "\n")
 
-
                     # Score calculations
-                    '''bleu_score_single_ref = calculate_bleu(gams_response, optimal_traffic_report)
+                    bleu_score_single_ref = calculate_bleu(gams_response, optimal_traffic_report)
                     print(f"BLEU Score (single reference): {bleu_score_single_ref:.4f}")
 
                     # --- Calculate and Print BERTScore ---
-                    bert_precision, bert_recall, bert_f1 = calculate_bert(generated_traffic_report,
+                    bert_precision, bert_recall, bert_f1 = calculate_bert(gams_response,
                                                                           optimal_traffic_report)
                     print(f"BERTScore Precision: {bert_precision:.4f}")
                     print(f"BERTScore Recall: {bert_recall:.4f}")
                     print(f"BERTScore F1-Score: {bert_f1:.4f}")
 
-                    print(("-" * 50) + "\n")'''
+                    print(("-" * 50) + "\n")
 
-                    response_gemini = chat_with_gemini(default_custom_instructions, traffic_report, gams_response)
+                    response_gemini = "chat_with_gemini(default_custom_instructions, traffic_report, gams_response)"
                     new_instructions = response_gemini.split("$")[1]
 
                     print(f"Gemini: {response_gemini.split("$")[0]}")
