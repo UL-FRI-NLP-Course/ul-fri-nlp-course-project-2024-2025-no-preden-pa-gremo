@@ -4,8 +4,8 @@ import sys
 import time
 from datetime import datetime
 from Data.readData import get_final_traffic_text, get_real_traffic_report  # import the function
-#from LLMs.gaMS import chat_with_gams
-#from LLMs.gemy import chat_with_gemini
+from LLMs.gaMS import chat_with_gams
+from LLMs.gemy import chat_with_gemini
 from Scores.bert import calculate_bert
 from Scores.bleu import calculate_bleu
 
@@ -86,7 +86,7 @@ def step_one():
 
                 print(("-" * 50) + "\n")
                 while True:
-                    gams_response = "chat_with_gams(traffic_report, default_custom_instructions)"
+                    gams_response = chat_with_gams(traffic_report, default_custom_instructions)
                     print(f"GaMS: {gams_response}")
                     print(("-" * 50) + "\n")
 
@@ -103,7 +103,7 @@ def step_one():
 
                     print(("-" * 50) + "\n")
 
-                    response_gemini = "chat_with_gemini(default_custom_instructions, traffic_report, gams_response)"
+                    response_gemini = chat_with_gemini(default_custom_instructions, traffic_report, gams_response)
                     new_instructions = response_gemini.split("$")[1]
 
                     print(f"Gemini: {response_gemini.split("$")[0]}")
