@@ -138,12 +138,4 @@ def get_real_traffic_report(input_time_str: str):
                 print(f"Found traffic report in {rtf_file.name} at {stamp}")
                 return body
 
-<<<<<<< Updated upstream
     return None
-=======
-    return None
-
-print(get_real_traffic_report("2023-04-19 16:45:00"))
-result = get_final_traffic_text("2023-04-19 18:35:00")
-print(result)
->>>>>>> Stashed changes
