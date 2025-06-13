@@ -4,9 +4,7 @@ import sys
 import time
 from datetime import datetime
 from Data.readData import get_final_traffic_text, get_real_traffic_report, analyze_reports
-from LLMs.gaMS import chat_with_gams
 from LLMs.gemy import chat_with_gemini
-from LLMs.gemma import chat_with_gemma
 from Scores.bert import calculate_bert
 from Scores.bleu import calculate_bleu
 import pandas as pd
@@ -65,10 +63,6 @@ def spinner(text, stop_event):
 
 
 def parse_report(full_text: str, report_n: int):
-    """
-    Parses a block of text to extract the timestamp, generated report, and real report
-    for a specific rank number.
-    """
     pattern = re.compile(
         fr"---------- RANK {report_n} ----------\n"
         r"TIMESTAMP:\s*(.*?)\n"
@@ -95,16 +89,12 @@ def parse_report(full_text: str, report_n: int):
 
 
 def parse_gemini_ratings(text: str) -> dict:
-    """
-    Parses the Gemini response text to extract all rating categories.
-    """
     ratings = {}
     categories = [
         "Slovnica", "Hierarhija dogodkov", "Sestava prometne informacije",
         "Poimenovanje avtocest", "Generalna"
     ]
     for category in categories:
-        # This pattern looks for the category name, "ocena:", a number, a hyphen, and the rest of the line.
         pattern = re.compile(fr"{category} ocena:\s*(\d+)\s*-\s*(.*)")
         match = pattern.search(text)
         if match:
@@ -117,12 +107,11 @@ def parse_gemini_ratings(text: str) -> dict:
 
 
 def run_automated_improvement(model_name: str, report_context: str):
-    """
-    Runs the automated instruction improvement and scoring process,
-    logging detailed results to a text file in real-time.
-    """
     global default_custom_instructions
-    results_filename = f"detailed_log_{model_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
+    # Create Logs directory if it doesn't exist
+    if not os.path.exists("Logs"):
+        os.makedirs("Logs")
+    results_filename = f"Logs/detailed_log_{model_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
 
     # Outer loop for the top 10 reports
     for report_n in range(1, 11):
@@ -144,6 +133,8 @@ def run_automated_improvement(model_name: str, report_context: str):
 
         # Inner loop for 5 iterations of instruction improvement
         for iteration in range(1, 6):
+            # --- Start Timing ---
+            start_time = time.time()
             print(f"--- Iteration {iteration}/5 ---")
 
             stop_event = threading.Event()
@@ -151,17 +142,21 @@ def run_automated_improvement(model_name: str, report_context: str):
             spinner_thread = threading.Thread(target=spinner, args=(spinner_text, stop_event))
             spinner_thread.start()
 
+            # Dynamically import the required model to avoid loading both
             if model_name == "gams":
+                from LLMs.gaMS import chat_with_gams
                 model_response = chat_with_gams(traffic_report, current_instructions)
             else:
-                model_response = chat_with_gemma(traffic_report, current_instructions)
+                from LLMs.gemma import chat_with_gemma_stateless
+                model_response = chat_with_gemma_stateless(traffic_report, current_instructions)
 
             stop_event.set()
             spinner_thread.join()
 
+            # --- Capture all BERT score components ---
             bleu_score = calculate_bleu(model_response, optimal_traffic_report)
-            _, _, bert_f1 = calculate_bert(model_response, optimal_traffic_report)
-            print(f"  Scores -> BLEU: {bleu_score:.4f}, BERT F1: {bert_f1:.4f}")
+            bert_precision, bert_recall, bert_f1 = calculate_bert(model_response, optimal_traffic_report)
+            print(f"  Scores -> BLEU: {bleu_score:.4f}, BERT F1: {bert_f1:.4f}, Precision: {bert_precision:.4f}, Recall: {bert_recall:.4f}")
 
             new_instructions = "Error: Could not generate new instructions."
             gemini_ratings = {}
@@ -175,6 +170,8 @@ def run_automated_improvement(model_name: str, report_context: str):
                     response_gemini = chat_with_gemini(current_instructions, traffic_report, model_response)
                     new_instructions = response_gemini.split("$")[1].strip()
                     gemini_ratings = parse_gemini_ratings(response_gemini)
+                    print("RESPONSE GEMINI:")
+                    print(response_gemini)
                     print("  Instructions improved for next iteration.")
                 except IndexError:
                     new_instructions = "# WARNING: Could not parse new instructions from Gemini's response. Re-using previous set. #"
@@ -191,17 +188,30 @@ def run_automated_improvement(model_name: str, report_context: str):
                 response_gemini = chat_with_gemini(current_instructions, traffic_report, model_response)
                 gemini_ratings = parse_gemini_ratings(response_gemini)
 
+            # --- End Timing and Calculate Duration ---
+            end_time = time.time()
+            duration = end_time - start_time
+            iteration_end_timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+            if "WARNING" not in new_instructions and "ERROR" not in new_instructions:
+                current_instructions = new_instructions
+
             log_block = f"""
 --------------------------------------------------------------------------------
-ITERATION: {iteration}
+ITERATION: {iteration} | FINISHED AT: {iteration_end_timestamp}
 --------------------------------------------------------------------------------
+
+--- TIMING ---
+Time taken for this iteration: {duration:.2f} seconds
 
 --- MODEL OUTPUT ---
 {model_response}
 
 --- SCORES ---
-BLEU Score: {bleu_score:.4f}
-BERT F1-Score: {bert_f1:.4f}
+BLEU Score:      {bleu_score:.4f}
+BERT Precision:  {bert_precision:.4f}
+BERT Recall:     {bert_recall:.4f}
+BERT F1-Score:   {bert_f1:.4f}
 
 --- GEMINI RATINGS ---
 Slovnica:                     {gemini_ratings.get("Slovnica", "Not Found")}
@@ -216,15 +226,12 @@ Generalna:                    {gemini_ratings.get("Generalna", "Not Found")}
             with open(results_filename, 'a', encoding='utf-8') as f:
                 f.write(log_block)
 
-            if "WARNING" not in new_instructions and "ERROR" not in new_instructions:
-                current_instructions = new_instructions
-
     print(f"\n{'=' * 20} AUTOMATED PROCESSING COMPLETE {'=' * 20}")
     print(f"All scores and details logged to '{results_filename}'")
 
 
 def step_one():
-    filename = "analysis_report-[2023-01-01][2023-12-31].txt"
+    filename = "Data/analysis_report-[2023-01-01][2023-12-31]-1000-chars.txt"
     try:
         with open(filename, 'r', encoding='utf-8') as f:
             report_context = f.read()
@@ -301,3 +308,4 @@ def find_good_reports():
 
 if __name__ == "__main__":
     main()
+    #find_good_reports()

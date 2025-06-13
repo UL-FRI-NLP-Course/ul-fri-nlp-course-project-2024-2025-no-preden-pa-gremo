@@ -4,8 +4,7 @@ import os
 import time
 
 # --- Configuration ---
-model_id = "cjvt/GaMS-2B-Instruct"
-#model_id = "google/gemma-7b-it"
+model_id = "cjvt/GaMS-9B-Instruct"
 
 use_quantization_if_gpu = True
 

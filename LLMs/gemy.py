@@ -22,6 +22,7 @@ Poleg generalne ocene vrni še oceno, na enak način za nasledna področja:
 - Hierarhija dogodkov (vrstni red podatkov glede na navodila), 
 - Sestava prometne informacije ("razlog -> cesta in smer -> posledica in odsek" oz. "cesta in smer -> razlog -> posledica in odsek"),
 - Poimenovanje avtocest (LJUBLJANA-KOPER – PRIMORSKA AVTOCESTA/ proti Kopru/proti Ljubljani; LJUBLJANA-OBREŽJE – DOLENJSKA AVTOCESTA / proti Obrežju/ proti Ljubljani; LJUBLJANA-KARAVANKE – GORENJSKA AVTOCESTA/ proti Karavankam ali Avstriji/ proti Ljubljani; LJUBLJANA-MARIBOR – ŠTAJERSKA AVTOCESTA / proti Mariboru/Ljubljani; MARIBOR-LENDAVA – POMURSKA AVTOCESTA / proti Mariboru/ proti Lendavi/Madžarski; MARIBOR-GRUŠKOVJE – PODRAVSKA AVTOCESTA / proti Mariboru/ proti Gruškovju ali Hrvaški – nikoli proti Ptuju!; AVTOCESTNI ODSEK – RAZCEP GABRK – FERNETIČI – proti Italiji/ ali proti primorski avtocesti, Kopru, Ljubljani (PAZI: to ni primorska avtocesta); AVTOCESTNI ODSEK MARIBOR-ŠENTILJ (gre od mejnega prehoda Šentilj do razcepa Dragučova) ni štajerska avtocesta kot pogosto navede PIC, ampak je avtocestni odsek o) tukaj je samo pomembno, da tiste ki bi moral uporabiti, da jih je uporabil pravilno 
+- Generalna
 
 V odgovoru vrni le: navodila, ki se jih je držal in navodila ki se jih ni držal, ter na koncu ocene, med vsako oceno naj boo prazna vrstica. Odgovor naj bo kratek in jedernat.
 
@@ -134,7 +135,7 @@ def chat_with_gemini(instructions, data, gams_response):
     start_gen_time = time.time()
 
     prompt = default_custom_instructions.replace("[instructions]", instructions).replace("[gams_response]", gams_response).replace("[data]", data)
-
+    gemini_output = "ERROR"
     #print("PROMPT:\n" + prompt)
 
     # --- Call the Gemini API ---

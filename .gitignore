@@ -136,3 +136,4 @@ dmypy.json
 Data/
 
 requirements.txt
+generated_reports_cache.pkl

@@ -273,18 +273,18 @@ def preload_generated_reports(data_file: str):
 
 def analyze_reports(start_date_str: str, end_date_str: str):
     """
-    Performs an ultra-fast analysis using full pre-loading of both generated
+    Performs an analysis using full pre-loading of both generated
     and real reports, with a fast HashingVectorizer for similarity.
-    NOW INCLUDES DE-DUPLICATION LOGIC.
+    Includes de-duplication and length filtering.
     """
     start_dt = datetime.strptime(start_date_str, "%Y-%m-%d %H:%M:%S")
     end_dt = datetime.strptime(end_date_str, "%Y-%m-%d %H:%M:%S")
 
-    # 1. PRE-LOAD (no changes here)
+    # 1. PRE-LOAD
     real_report_cache = preload_real_reports(start_dt, end_dt)
     generated_report_cache = preload_generated_reports(data_file)
 
-    # 2. MATCH (no changes here)
+    # 2. MATCH
     print("Matching cached reports...")
     results_list = []
 
@@ -306,7 +306,12 @@ def analyze_reports(start_date_str: str, end_date_str: str):
 
     results_df = pd.DataFrame(results_list)
 
-    # 3. SIMILARITY CALCULATION (no changes here)
+    # FILTER BY GENERATED REPORT LENGTH
+    initial_count = len(results_df)
+    results_df = results_df[results_df['generated_report'].str.len() < 1000]
+    print(f"\nFiltered out {initial_count - len(results_df)} reports with generated_report length >= 1000 characters.")
+
+    # 3. SIMILARITY CALCULATION
     print(f"Calculating similarity for {len(results_df)} report pairs using HashingVectorizer...")
     vectorizer = HashingVectorizer(stop_words='english', n_features=2 ** 18)
     generated_vectors = vectorizer.transform(results_df['generated_report'])
@@ -314,21 +319,11 @@ def analyze_reports(start_date_str: str, end_date_str: str):
     similarities = (generated_vectors * real_vectors.T).diagonal()
     results_df['hash_similarity'] = similarities
 
-    # ------------------------------------------------------------------
-    # --- NEW: 4. FILTER FOR UNIQUE BEST MATCHES ---
-    # ------------------------------------------------------------------
+    # 4. FILTER FOR UNIQUE BEST MATCHES
     print(f"\nOriginal matched pairs found: {len(results_df)}")
-
-    # First, sort by similarity score, highest to lowest.
-    # This ensures that the first entry for any given real_report is its best match.
     results_df = results_df.sort_values(by='hash_similarity', ascending=False)
-
-    # Now, drop duplicates based on the 'real_report' column, keeping only the first occurrence.
     results_df = results_df.drop_duplicates(subset=['real_report'], keep='first')
-
     print(f"Filtered down to {len(results_df)} unique best matches.")
-    # ------------------------------------------------------------------
 
     print("Analysis complete.")
-    # The final sorting for the report will be handled in the main block.
     return results_df

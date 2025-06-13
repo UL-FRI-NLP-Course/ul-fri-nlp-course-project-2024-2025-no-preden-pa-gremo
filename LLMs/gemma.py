@@ -1,15 +1,8 @@
 import torch
 from transformers import pipeline, AutoTokenizer, BitsAndBytesConfig
 
-# --------------------------------------------------
-# Configuration – switched from GaMS to Google Gemma
-# --------------------------------------------------
-model_id = "google/gemma-2b-it"
-use_quantization_if_gpu = True  # still optional
-
-# --------------------------------------------------
-# Device detection (prefers CUDA if available)
-# --------------------------------------------------
+model_id = "google/gemma-7b-it"
+use_quantization_if_gpu = True
 pipeline_device = -1  # -1 = CPU for HF pipeline
 compute_dtype = None
 
@@ -98,14 +91,6 @@ def _history():
 
 
 def chat_with_gemma(prompt: str, instructions: str = ""):
-    """Chat with Gemma, maintaining state across calls.
-
-    Args:
-        prompt: The user message.
-        instructions: Optional system instructions prepended on first turn.
-    Returns:
-        Assistant reply as a plain string.
-    """
     print("Running Gemma…")
     history = _history()
 
@@ -118,7 +103,7 @@ def chat_with_gemma(prompt: str, instructions: str = ""):
     try:
         response = pipe(
             history,
-            max_new_tokens=1024,  # plenty for a 1‑B model
+            max_new_tokens=4096,
             do_sample=True,
             temperature=0.7,
             eos_token_id=eos_token_id,
@@ -137,6 +122,37 @@ def chat_with_gemma(prompt: str, instructions: str = ""):
         # Clean state so future calls still work
         if history and history[-1]["role"] == "user":
             history.pop()
+        raise RuntimeError(f"Inference failed: {err}") from err
+
+
+def chat_with_gemma_stateless(prompt: str, instructions: str = ""):
+    print("Running Gemma (stateless)...")
+
+    temp_history = []
+
+    if instructions:
+        full_prompt = f"{instructions}\n\n{prompt}"
+    else:
+        full_prompt = prompt
+
+    temp_history.append({"role": "user", "content": full_prompt})
+
+    try:
+        response = pipe(
+            temp_history,
+            max_new_tokens=4096,
+            do_sample=True,
+            temperature=0.7,
+            eos_token_id=eos_token_id,
+        )
+
+        assistant_msg = response[0]["generated_text"][-1]
+        if assistant_msg["role"] != "assistant":
+            raise ValueError("Unexpected response format from model.")
+
+        return assistant_msg["content"]
+
+    except Exception as err:
         raise RuntimeError(f"Inference failed: {err}") from err
 
 
